@@ -1,0 +1,13 @@
+SCENARIO : Get product with non-existent ID returns not found error
+FEATURE  : E-commerce Products API Validation
+TAGS     : @api @negative
+START    : 12:10:09 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I send a GET request to "/products/99999"  (0ms)
+[02] ✔ the API response status should be 404  (0ms)
+[03] ✔ the response body should contain field "message"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 3 total | 3 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:09 12/5/2026

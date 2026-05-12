@@ -1,0 +1,16 @@
+SCENARIO : Add multiple products increases cart badge count
+FEATURE  : Cart Management
+TAGS     : @ui @cart @smoke
+BROWSER  : chrome
+START    : 12:09:46 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I am on the login page  (0ms)
+[02] ✔ I login with username "standard_user" and password "secret_sauce"  (0ms)
+[03] ✔ I add product "Sauce Labs Backpack" to cart  (0ms)
+[04] ✔ I add product "Sauce Labs Bike Light" to cart  (0ms)
+[05] ✔ the cart badge should show "2"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 5 total | 5 passed | 0 failed
+DURATION : 0ms
+END      : 12:09:52 12/5/2026

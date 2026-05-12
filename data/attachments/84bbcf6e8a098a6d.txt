@@ -1,0 +1,13 @@
+SCENARIO : Get all product categories returns a non-empty list
+FEATURE  : E-commerce Products API Validation
+TAGS     : @api
+START    : 12:10:09 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I send a GET request to "/products/categories"  (0ms)
+[02] ✔ the API response status should be 200  (0ms)
+[03] ✔ the response should be a non-empty array  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 3 total | 3 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:09 12/5/2026

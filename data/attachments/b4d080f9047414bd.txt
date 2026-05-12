@@ -1,0 +1,14 @@
+SCENARIO : Login with multiple users
+FEATURE  : Login
+TAGS     : @ui @login @smoke
+BROWSER  : firefox
+START    : 12:10:00 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I am on the login page  (0ms)
+[02] ✔ I login with username "locked_out_user" and password "secret_sauce"  (0ms)
+[03] ✔ I validate result "fail"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 3 total | 3 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:03 12/5/2026

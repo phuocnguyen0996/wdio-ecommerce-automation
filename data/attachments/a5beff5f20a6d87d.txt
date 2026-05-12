@@ -1,0 +1,14 @@
+SCENARIO : Create a new product via POST returns created product
+FEATURE  : E-commerce Products API Validation
+TAGS     : @api
+START    : 12:10:09 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I send a POST request to "/products/add" with body:  (0ms)
+[02] ✔ the API response status should be 201  (0ms)
+[03] ✔ the response body should contain field "id"  (0ms)
+[04] ✔ the response field "title" should equal "Interview Demo Product"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 4 total | 4 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:10 12/5/2026

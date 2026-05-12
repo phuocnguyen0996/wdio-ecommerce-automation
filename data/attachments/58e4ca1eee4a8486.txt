@@ -1,0 +1,13 @@
+SCENARIO : Authenticate user with valid credentials returns access token
+FEATURE  : E-commerce Products API Validation
+TAGS     : @api @smoke
+START    : 12:10:10 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I send a POST request to "/auth/login" with body:  (0ms)
+[02] ✔ the API response status should be 200  (0ms)
+[03] ✔ the response body should contain field "accessToken"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 3 total | 3 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:10 12/5/2026

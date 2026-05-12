@@ -1,0 +1,13 @@
+SCENARIO : Get products filtered by category returns only matching products
+FEATURE  : E-commerce Products API Validation
+TAGS     : @api
+START    : 12:10:09 12/5/2026
+────────────────────────────────────────────────────────────────
+[01] ✔ I send a GET request to "/products/category/smartphones"  (0ms)
+[02] ✔ the API response status should be 200  (0ms)
+[03] ✔ all products in the list should have category "smartphones"  (0ms)
+────────────────────────────────────────────────────────────────
+RESULT   : ✅ PASSED
+STEPS    : 3 total | 3 passed | 0 failed
+DURATION : 0ms
+END      : 12:10:09 12/5/2026
