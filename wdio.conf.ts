@@ -4,6 +4,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { addAttachment } from '@wdio/allure-reporter';
 
+interface StepLog {
+    text: string;
+    passed: boolean;
+    duration: number;
+    error?: string;
+}
+
+interface ScenarioLog {
+    name: string;
+    feature: string;
+    tags: string;
+    browser: string;
+    startTime: Date;
+    steps: StepLog[];
+}
+
+const scenarioLogs = new Map<string, ScenarioLog>();
+
+function getScenarioKey(world: any): string {
+    return world?.pickle?.id ?? world?.pickle?.name ?? 'unknown';
+}
+
+const LINE = '═'.repeat(64);
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function parseEnvList(value?: string, fallback = ''): string[] {
@@ -14,7 +38,7 @@ function parseEnvList(value?: string, fallback = ''): string[] {
     .filter(Boolean);
 }
 
-const specs = parseEnvList(process.env.SPECT, './features/**/*.feature');
+const specs = parseEnvList(process.env.SPECT, './features/*.feature');
 const tagExpression = process.env.TAGS?.trim().replace(/^['"]|['"]$/g, '') || '';
 const isCi = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 
@@ -179,7 +203,10 @@ export const config: WebdriverIO.Config = {
     // If you are using Cucumber you need to specify the location of your step definitions.
     cucumberOpts: {
         // <string[]> (file/dir) require files before executing features
-        require: ['./features/step-definitions/**/*.ts'],
+        require: [
+            './features/step-definitions/login.steps.ts',
+            './features/step-definitions/inventory.steps.ts'
+        ],
         // <boolean> show full backtrace for errors
         backtrace: false,
         // <string[]> ("extension:module") require files with the given EXTENSION after requiring MODULE (repeatable)
@@ -281,8 +308,29 @@ export const config: WebdriverIO.Config = {
      * @param {ITestCaseHookParameter} world    world object containing information on pickle and test step
      * @param {object}                 context  Cucumber World object
      */
-    // beforeScenario: function (world, context) {
-    // },
+    beforeScenario: function (world: any, _context: any) {
+        const key = getScenarioKey(world);
+        const featureName = world?.gherkinDocument?.feature?.name ?? 'Unknown Feature';
+        const tags = (world?.pickle?.tags ?? []).map((t: any) => t.name).join(' ') || '(none)';
+        const browserName = (browser as any)?.capabilities?.browserName ?? 'unknown';
+
+        scenarioLogs.set(key, {
+            name: world?.pickle?.name ?? 'Unknown Scenario',
+            feature: featureName,
+            tags,
+            browser: browserName,
+            startTime: new Date(),
+            steps: []
+        });
+
+        console.log(`\n${LINE}`);
+        console.log(`  SCENARIO : ${world?.pickle?.name}`);
+        console.log(`  FEATURE  : ${featureName}`);
+        console.log(`  TAGS     : ${tags}`);
+        console.log(`  BROWSER  : ${browserName}`);
+        console.log(`  START    : ${new Date().toLocaleString('vi-VN')}`);
+        console.log(LINE);
+    },
     /**
      *
      * Runs before a Cucumber Step.
@@ -290,8 +338,9 @@ export const config: WebdriverIO.Config = {
      * @param {IPickle}            scenario scenario pickle
      * @param {object}             context  Cucumber World object
      */
-    // beforeStep: function (step, scenario, context) {
-    // },
+    beforeStep: function (step: any, _scenario: any, _context: any) {
+        console.log(`\n  ▶ ${step?.text ?? ''}`);
+    },
     /**
      *
      * Runs after a Cucumber Step.
@@ -303,8 +352,29 @@ export const config: WebdriverIO.Config = {
      * @param {number}             result.duration  duration of scenario in milliseconds
      * @param {object}             context          Cucumber World object
      */
-    afterStep: async function (_step, _scenario, result, _context) {
-        if (result.error) {
+    afterStep: async function (step: any, scenario: any, result: any, _context: any) {
+        const key = scenario?.id ?? scenario?.name ?? 'unknown';
+        const entry = scenarioLogs.get(key);
+        const durationMs = Math.round((result.duration ?? 0) / 1_000_000);
+        const passed = result.passed ?? !result.error;
+
+        const statusIcon = passed ? '  ✔' : '  ✘';
+        console.log(`${statusIcon} ${passed ? 'PASSED' : 'FAILED'} (${durationMs}ms)`);
+        if (!passed && result.error) {
+            const errLine = String(result.error).split('\n')[0];
+            console.log(`     ERROR: ${errLine}`);
+        }
+
+        if (entry) {
+            entry.steps.push({
+                text: step?.text ?? '',
+                passed,
+                duration: durationMs,
+                error: result.error ? String(result.error).split('\n')[0] : undefined
+            });
+        }
+
+        if (!passed) {
             const screenshot = await browser.takeScreenshot();
             addAttachment('Screenshot', Buffer.from(screenshot, 'base64'), 'image/png');
         }
@@ -319,25 +389,65 @@ export const config: WebdriverIO.Config = {
      * @param {number}                 result.duration  duration of scenario in milliseconds
      * @param {object}                 context          Cucumber World object
      */
-    afterScenario: async function (_world, _result, _context) {
+    afterScenario: async function (world: any, result: any, _context: any) {
+        const key = getScenarioKey(world);
+        const entry = scenarioLogs.get(key);
+
+        if (entry) {
+            const passed = result.passed ?? !result.error;
+            const totalSteps = entry.steps.length;
+            const passedSteps = entry.steps.filter(s => s.passed).length;
+            const failedSteps = totalSteps - passedSteps;
+            const totalDuration = entry.steps.reduce((sum, s) => sum + s.duration, 0);
+            const statusLabel = passed ? '✅ PASSED' : '❌ FAILED';
+
+            // Console summary
+            console.log(`\n${LINE}`);
+            console.log(`  RESULT   : ${statusLabel}`);
+            console.log(`  STEPS    : ${totalSteps} total | ${passedSteps} passed | ${failedSteps} failed`);
+            console.log(`  DURATION : ${totalDuration}ms`);
+            console.log(`  END      : ${new Date().toLocaleString('vi-VN')}`);
+            console.log(`${LINE}\n`);
+
+            // Build Allure text attachment
+            let log = '';
+            log += `SCENARIO : ${entry.name}\n`;
+            log += `FEATURE  : ${entry.feature}\n`;
+            log += `TAGS     : ${entry.tags}\n`;
+            log += `BROWSER  : ${entry.browser}\n`;
+            log += `START    : ${entry.startTime.toLocaleString('vi-VN')}\n`;
+            log += `${'─'.repeat(64)}\n`;
+            entry.steps.forEach((s, i) => {
+                const icon = s.passed ? '✔' : '✘';
+                log += `[${String(i + 1).padStart(2, '0')}] ${icon} ${s.text}  (${s.duration}ms)\n`;
+                if (!s.passed && s.error) {
+                    log += `       ERROR: ${s.error}\n`;
+                }
+            });
+            log += `${'─'.repeat(64)}\n`;
+            log += `RESULT   : ${statusLabel}\n`;
+            log += `STEPS    : ${totalSteps} total | ${passedSteps} passed | ${failedSteps} failed\n`;
+            log += `DURATION : ${totalDuration}ms\n`;
+            log += `END      : ${new Date().toLocaleString('vi-VN')}\n`;
+
+            addAttachment('Scenario Execution Log', log, 'text/plain');
+            scenarioLogs.delete(key);
+        }
+
         // Attach video to Allure report
         try {
             const videoDir = path.join(__dirname, '_results_');
             if (fs.existsSync(videoDir)) {
                 const videos = fs.readdirSync(videoDir)
                     .filter(f => f.endsWith('.webm'))
-                    .sort((a, b) => fs.statSync(path.join(videoDir, b)).mtime.getTime() - 
+                    .sort((a, b) => fs.statSync(path.join(videoDir, b)).mtime.getTime() -
                                    fs.statSync(path.join(videoDir, a)).mtime.getTime());
-                
+
                 if (videos.length > 0) {
                     const latestVideo = path.join(videoDir, videos[0]);
                     if (fs.existsSync(latestVideo)) {
                         const videoBuffer = fs.readFileSync(latestVideo);
-                        await addAttachment(
-                            'Test Execution Video',
-                            videoBuffer,
-                            'video/webm'
-                        );
+                        await addAttachment('Test Execution Video', videoBuffer, 'video/webm');
                     }
                 }
             }

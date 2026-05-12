@@ -1,6 +1,6 @@
 Feature: paralle test
 
-  @login @negative
+  @ui @login @negative
   Scenario Outline: Login unsuccessfully with locked out user
     Given I am on the login page
     When I login with username "<username>" and password "<password>"

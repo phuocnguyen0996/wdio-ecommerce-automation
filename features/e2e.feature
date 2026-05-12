@@ -1,6 +1,6 @@
 Feature: E2E Purchase Flow
 
-  @e2e @purchase
+  @ui @e2e @purchase
   Scenario Outline: Successful purchase flow
     Given I am on the login page
     When I login with username "<username>" and password "<password>"
